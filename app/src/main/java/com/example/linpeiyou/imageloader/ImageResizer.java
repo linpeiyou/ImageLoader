@@ -45,6 +45,7 @@ public class ImageResizer {
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
+        // TODO: 多次快速滑动后，这里会出现OutOfMemoryError
         return BitmapFactory.decodeFileDescriptor(fd, null, options);
     }
 

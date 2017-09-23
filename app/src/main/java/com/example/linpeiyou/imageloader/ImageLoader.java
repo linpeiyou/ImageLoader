@@ -28,6 +28,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -85,9 +87,13 @@ public class ImageLoader {
             switch (msg.what) {
                 case MESSAGE_POST_RESULT:
                 {
-                    // TODO: 防止图片错位
                     LoaderResult loaderResult = (LoaderResult) msg.obj;
-                    loaderResult.imageView.setImageBitmap(loaderResult.bitmap);
+                    ImageView imageView = loaderResult.imageView;
+                    if(imageView.getTag(TAG_KEY_URI).equals(loaderResult.uri)) {
+                        imageView.setImageBitmap(loaderResult.bitmap);
+                    } else {
+                        Log.d(TAG, "set image bitmap,but url has changed, ignored!");
+                    }
                 } break;
             }
             return false;
@@ -127,7 +133,7 @@ public class ImageLoader {
      * @param context
      * @return a new instance of ImageLoader
      */
-    private static ImageLoader build(Context context) {
+    public static ImageLoader build(Context context) {
         return new ImageLoader(context);
     }
 
@@ -174,6 +180,7 @@ public class ImageLoader {
         bindBitmap(uri, imageView, 0, 0);
     }
 
+    private List<Bitmap> testBitmap = new ArrayList<>();
     /**
      * 异步加载图片
      */
@@ -189,8 +196,9 @@ public class ImageLoader {
             @Override
             public void run() {
                 Bitmap bitmap2 = loadBitmap(uri, reqWidth, reqHeight);
-                if(bitmap != null) {
-                    LoaderResult loaderResult = new LoaderResult(imageView, uri, bitmap);
+                testBitmap.add(bitmap2);
+                if(bitmap2 != null) {
+                    LoaderResult loaderResult = new LoaderResult(imageView, uri, bitmap2);
                     mMainHandler.obtainMessage(MESSAGE_POST_RESULT, loaderResult).sendToTarget();
                 }
             }
@@ -226,7 +234,7 @@ public class ImageLoader {
             if(urlConnection != null) {
                 urlConnection.disconnect();
             }
-            CloseUtils.close(in);
+            MyUtils.close(in);
         }
         return bitmap;
     }
@@ -334,8 +342,8 @@ public class ImageLoader {
             if(urlConnection != null) {
                 urlConnection.disconnect();
             }
-            CloseUtils.close(out);
-            CloseUtils.close(in);
+            MyUtils.close(out);
+            MyUtils.close(in);
         }
         return false;
     }
@@ -361,6 +369,7 @@ public class ImageLoader {
         String cacheKey;
         try {
             final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+            messageDigest.update(url.getBytes());
             cacheKey = bytesToHexString(messageDigest.digest());
         } catch (NoSuchAlgorithmException e) {
             cacheKey = String.valueOf(url.hashCode());
