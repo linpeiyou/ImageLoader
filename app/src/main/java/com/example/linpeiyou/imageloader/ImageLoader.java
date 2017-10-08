@@ -180,7 +180,6 @@ public class ImageLoader {
         bindBitmap(uri, imageView, 0, 0);
     }
 
-    private List<Bitmap> testBitmap = new ArrayList<>();
     /**
      * 异步加载图片
      */
@@ -196,7 +195,6 @@ public class ImageLoader {
             @Override
             public void run() {
                 Bitmap bitmap2 = loadBitmap(uri, reqWidth, reqHeight);
-                testBitmap.add(bitmap2);
                 if(bitmap2 != null) {
                     LoaderResult loaderResult = new LoaderResult(imageView, uri, bitmap2);
                     mMainHandler.obtainMessage(MESSAGE_POST_RESULT, loaderResult).sendToTarget();
